@@ -1,0 +1,22 @@
+{
+  "background": {
+    "scripts": ["background.js"],
+    "persistent": false
+  },
+  "browser_action": {
+    "default_icon": {
+      "19": "assets/infinity19.png",
+      "38": "assets/infinity38.png"
+    }
+  },
+  "description": "A clock for your browser",
+  "icons": {
+    "16": "assets/infinity16.png",
+    "48": "assets/infinity48.png",
+    "128": "assets/infinity128.png"
+  },
+  "manifest_version": 2,
+  "name": "Browser Clock",
+  "permissions": ["alarms", "storage"],
+  "version": "1.0"
+}
