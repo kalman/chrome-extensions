@@ -1,15 +1,17 @@
 function getHoursImageData(date) {
-  var size = 19 * window.devicePixelRatio;
-  var canvas = document.createElement('canvas');
-  canvas.textContent = date.getHours() + ':' + getMinutesText(date);
-  canvas.setAttribute('width', size);
-  canvas.setAttribute('height', size);
-  var context = canvas.getContext('2d');
-  context.font = 'bold ' + (size * 0.67) + 'px \'Lucida Grande\'';
-  context.textAlign = 'center';
-  context.textBaseline = 'middle';
-  context.fillText(date.getHours(), size/2, size/3);
-  return context.getImageData(0, 0, size, size);
+  function create(size) {
+    var canvas = document.createElement('canvas');
+    canvas.textContent = date.getHours() + ':' + getMinutesText(date);
+    canvas.setAttribute('width', size);
+    canvas.setAttribute('height', size);
+    var context = canvas.getContext('2d');
+    context.font = 'bold ' + (size * 0.67) + 'px \'Lucida Grande\'';
+    context.textAlign = 'center';
+    context.textBaseline = 'middle';
+    context.fillText(date.getHours(), size/2, size/3);
+    return context.getImageData(0, 0, size, size);
+  }
+  return {19: create(19), 38: create(38)};
 }
 
 function getMinutesText(date) {
