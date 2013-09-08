@@ -21,11 +21,21 @@ function getMinutesText(date) {
   return minutes;
 }
 
+function quantizeMinutes(date) {
+  var msSinceEpoch = date.getTime();
+  var seconds = date.getSeconds();
+  var floor = new Date(msSinceEpoch - seconds * 1000);
+  var ceil = new Date(msSinceEpoch + (60 - seconds) * 1000);
+  return {
+    floor: floor,
+    round: seconds < 30 ? floor : ceil,
+    ceil: ceil
+  };
+}
+
 function update() {
   var now = new Date();
-  var seconds = now.getSeconds(), time = now.getTime();
-  var nearestMinute = new Date(seconds < 30 ? time - seconds * 1000 :
-                                              time + (60 - seconds) * 1000);
+  var nearestMinute = quantizeMinutes(now).round;
   chrome.browserAction.setIcon({imageData: getHoursImageData(nearestMinute)});
   chrome.browserAction.setBadgeText({text: getMinutesText(nearestMinute)});
   chrome.browserAction.setTitle({title: String(now)});
@@ -34,10 +44,15 @@ function update() {
 chrome.runtime.onInstalled.addListener(function() {
   chrome.browserAction.setBadgeBackgroundColor({color: '#000'});
   update();
+
+  // Set up an alarm to fire on the soonest minute mark > 60 seconds in the
+  // future (that's the finest granulatity that the alarms API supports), then
+  // every minute after that.
+  chrome.alarms.create({
+    when: quantizeMinutes(new Date()).ceil.getTime() + (60 * 1000),
+    periodInMinutes: 1
+  });
 });
+
 chrome.runtime.onStartup.addListener(update);
 chrome.alarms.onAlarm.addListener(update);
-
-// It's impossible for this to be any more accurate than a minute, so any
-// calculation more complex than this is pointless.
-chrome.alarms.create({delayInMinutes: 1});
