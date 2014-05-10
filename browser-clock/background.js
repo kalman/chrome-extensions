@@ -35,14 +35,14 @@ function quantizeMinutes(date) {
 
 function update() {
   var now = new Date();
-  var nearestMinute = quantizeMinutes(now).round;
-  chrome.browserAction.setIcon({imageData: getHoursImageData(nearestMinute)});
+  var nearestMinute = quantizeMinutes(now).floor;
+  chrome.browserAction.setBadgeBackgroundColor({color: '#000'});
   chrome.browserAction.setBadgeText({text: getMinutesText(nearestMinute)});
+  chrome.browserAction.setIcon({imageData: getHoursImageData(nearestMinute)});
   chrome.browserAction.setTitle({title: String(now)});
 }
 
 chrome.runtime.onInstalled.addListener(function() {
-  chrome.browserAction.setBadgeBackgroundColor({color: '#000'});
   update();
 
   // Set up an alarm to fire on the soonest minute mark > 60 seconds in the
@@ -54,5 +54,6 @@ chrome.runtime.onInstalled.addListener(function() {
   });
 });
 
-chrome.runtime.onStartup.addListener(update);
 chrome.alarms.onAlarm.addListener(update);
+chrome.browserAction.onClicked.addListener(update);
+chrome.runtime.onStartup.addListener(update);
