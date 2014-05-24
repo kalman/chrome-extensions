@@ -1,0 +1,28 @@
+{
+  "background": {
+    "scripts": ["background.js"],
+    "persistent": false
+  },
+  "content_scripts": [
+    {
+      "matches": ["*://code.google.com/p/chromium/codesearch*"],
+      "css": ["hidebanner.css"]
+    }
+  ],
+  "description": "Chromium in the Omnibox",
+  "icons": {
+    "16": "assets/chromium16.png",
+    "48": "assets/chromium48.png",
+    "128": "assets/chromium128.png"
+  },
+  "manifest_version": 2,
+  "name": "Omni-Chromium",
+  "omnibox": {
+    "keyword": "cr"
+  },
+  "permissions": [
+    "storage",
+    "https://code.google.com/p/cs/codesearch/codesearch/json/*"
+  ],
+  "version": "2"
+}

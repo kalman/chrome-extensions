@@ -1,0 +1,11 @@
+.headbg, .gtb {
+    display: none;
+}
+
+.sandbar {
+    height: 0px !important;
+}
+
+.MX {
+    top: -132px !important;
+}
