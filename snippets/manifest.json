@@ -1,0 +1,29 @@
+{
+  "background": {
+    "scripts": ["promise.js", "background.js"],
+    "persistent": false
+  },
+  "browser_action": {
+    "default_icon": {
+      "19": "assets/icon_19_grey.png",
+      "38": "assets/icon_38_grey.png"
+    },
+    "default_popup": "popup.html",
+    "default_title": "Click to write snippets"
+  },
+  "description": "An easy way to write snippets",
+  "icons": {
+    "128": "assets/icon_128_grey.png"
+  },
+  "manifest_version": 2,
+  "name": "Snippets",
+  "optional_permissions": [
+    "<all_urls>"
+  ],
+  "permissions": [
+    "activeTab",
+    "storage",
+    "tabs"
+  ],
+  "version": "1.5"
+}

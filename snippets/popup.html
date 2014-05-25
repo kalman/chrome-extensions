@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<body>
+  <style type="text/css">
+    body {
+      font-family: monospace;
+      /* Arbitrary large size. Chrome will restict the actual popup size, then
+      we resize the body to fix. */
+      height: 10000px;
+      width: 10000px;
+    }
+    [hidden] {
+      display: none;
+    }
+    #errorContainer {
+      background-color: #FFEEEE;
+      color: red;
+      padding: 10px;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+    }
+    #errorHeading {
+      font-weight: bold;
+    }
+    #errorLog {
+      white-space: pre;
+    }
+    #footer {
+      border-top: 1px solid #eee;
+      padding: 5px 0;
+    }
+    #snippets {
+      font-family: monospace;
+      border: none;
+      font-size: 14px;
+      outline: none;
+      resize: none;
+    }
+    #tip {
+      color: #aaa;
+      float: right;
+    }
+  </style>
+  <div id="errorContainer" hidden>
+    <div id="errorHeading">
+      There was an error
+      [<a href="mailto:kalman@chromium.org" id="report">Report</a>]:
+    </div>
+    <div id="errorLog"></div>
+  </div>
+  <textarea id="snippets" placeholder="Loading..."></textarea>
+  <div id="footer">
+    <a href="https://$(SNIPPETS_URL)" id="go">$(SNIPPETS_URL)</a>
+    <span id="tip"></span>
+  </div>
+  <script src="promise.js"></script>
+  <script src="popup.js"></script>
+</body>
