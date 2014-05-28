@@ -9,7 +9,7 @@
       "css": ["hidebanner.css"]
     }
   ],
-  "description": "Chromium in the Omnibox",
+  "description": "Chromium developer tools in the Omnibox",
   "icons": {
     "16": "assets/chromium16.png",
     "48": "assets/chromium48.png",
@@ -24,5 +24,5 @@
     "storage",
     "https://code.google.com/p/cs/codesearch/codesearch/json/*"
   ],
-  "version": "3"
+  "version": "4"
 }

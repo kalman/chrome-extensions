@@ -44,11 +44,11 @@ CodesearchSuggestions.prototype.getSuggestions = function(query, response) {
     suggestions = response.suggest_response[0].suggestion;
     if (suggestions == null) {
       // No suggestions.
-      return;
+      return [];
     }
   } catch (e) {
     console.error('Invalid response: ' + currentXhr.responseText);
-    return;
+    return = [];
   }
 
   suggestions.sort(function(s1, s2) {
@@ -131,6 +131,50 @@ CrbugSuggestions.prototype.getSuggestions = function(query, response) {
   }];
 };
 
+/**
+ * Suggestions for authors.
+ */
+function AuthorSuggestions() {
+}
+
+AuthorSuggestions.prototype.getURL = function(query) {
+  return 'https://code.google.com/p/chromium/feeds/issueOptions';
+};
+
+AuthorSuggestions.prototype.getSuggestions = function(query, response) {
+  // |response| has the XSSI protection. Strip it.
+  response = response.slice(response.indexOf('{'));
+
+  var issueOptions = JSON.parse(response);
+  if (!issueOptions)
+    return [];
+
+  var members = issueOptions.members;
+  if (!members)
+    return [];
+
+  var suggestions = [];
+  for (var i = 0; i < members.length; i++) {
+    var member = members[i].name;
+    var memberIndex = member.indexOf(query);
+    if (memberIndex === 0) {
+      suggestions.push({
+        content: [
+          'https://git.chromium.org/gitweb/?',
+          'p=chromium.git&a=search&h=HEAD&st=author&s=',
+          member
+        ].join(''),
+        description: [
+          member.slice(0, memberIndex),
+          '<match>', member.slice(memberIndex, query.length), '</match>',
+          member.slice(memberIndex + query.length)
+        ].join('')
+      });
+    }
+  }
+  return suggestions;
+};
+
 function codesearchQuery(query) {
   return [
     'https://code.google.com/p/chromium/codesearch#search/',
@@ -148,12 +192,24 @@ chrome.omnibox.onInputChanged.addListener(function(query, suggest) {
   }
   currentXhr = new XMLHttpRequest();
 
-  suggestObj = new CodesearchSuggestions();
-  if (startsWith(query, 'bug:')) {
-    query = query.slice('bug:'.length);
-    suggestObj = new CrbugSuggestions();
-  }
+  // TODO: implement response caching if appropriate.
   // TODO: rev:12345, author:kalman, etc.
+  var suggestions = {
+    'author': AuthorSuggestions,
+    'bug': CrbugSuggestions,
+  };
+
+  suggestObj = new CodesearchSuggestions();
+
+  var suggestionKeys = Object.getOwnPropertyNames(suggestions);
+  for (var i = 0; i < suggestionKeys.length; i++) {
+    var key = suggestionKeys[i];
+    if (startsWith(query, key + ':')) {
+      query = query.slice(key.length + 1).trim();
+      suggestObj = new suggestions[key];
+      break;
+    }
+  }
 
   currentXhr.open('GET', suggestObj.getURL(query), true);
   currentXhr.onload = function() {
