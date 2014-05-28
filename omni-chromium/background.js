@@ -1,4 +1,5 @@
 // Copyright or something.
+'use strict';
 
 function startsWith(str, start) {
   return str.slice(0, start.length) == start;
@@ -11,17 +12,22 @@ function Suggestions() {
 }
 
 Suggestions.prototype.getURL = function() {
-  throw new Error();
+  throw new Error('Not implemented');
 };
 
 Suggestions.prototype.getSuggestions = function(query, response) {
-  throw new Error();
+  throw new Error('Not implemented');
+};
+
+Suggestions.prototype.shouldThrottle = function() {
+  return false;
 };
 
 /**
  * Suggestions for codesearch.
  */
 function CodesearchSuggestions() {
+  this.__proto__.__proto__ = Suggestions.prototype;
 }
 
 CodesearchSuggestions.prototype.getURL = function(query) {
@@ -62,7 +68,7 @@ CodesearchSuggestions.prototype.getSuggestions = function(query, response) {
     var href = [
       'https://code.google.com/p/chromium/codesearch#',
       suggest.goto_package_id, '/', suggest.goto_path, '&',
-      'q=', query, '&',
+      'q=', encodeURI(query), '&',
       'sq=package:chromium&',
       has_line ? ('l=' + suggest.goto_line) : '',
     ].join('');
@@ -97,44 +103,66 @@ CodesearchSuggestions.prototype.getSuggestions = function(query, response) {
  * Suggestions for crbugs.
  */
 function CrbugSuggestions() {
+  this.__proto__.__proto__ = Suggestions.prototype;
 }
 
 CrbugSuggestions.prototype.getURL = function(query) {
   return [
-    'https://code.google.com/p/chromium/issues/peek?',
-    'id=', query
+    'https://code.google.com/p/chromium/issues/list?',
+    'q=is:starred+', encodeURI(query), '&',
+    'sort=-id&',
+    'colspec=ID%20Pri%20M%20Iteration%20ReleaseBlock%20Cr%20Status%20Owner%20',
+    'Summary%20OS%20Modified'
   ].join('');
 };
 
 CrbugSuggestions.prototype.getSuggestions = function(query, response) {
-  var dom = new DOMParser().parseFromString(response, 'text/html');
-  var titleElem = dom.querySelector('#issuesummary');
-  if (!titleElem) {
-    // No title element --> not a valid bug.
-    return [];
-  }
-  var title = titleElem.textContent;
+  // I would use DOMParser here but it crashes on this input for some reason.
+  var dom = document.createElement('div');
+  dom.innerHTML = response;
 
-  var reporter = '(none)';
-  var userElem = dom.querySelector('.author .userlink');
-  if (userElem) {
-    reporter = userElem.textContent;
-  }
+  var suggestions = []
+  Array.prototype.forEach.call(
+      dom.querySelectorAll('#resultstable tr:not(#headingrow)'),
+      function(row) {
+    // Bug# is column 0.
+    var idElem = row.getElementsByClassName('col_0')[0];
+    if (!idElem) return;
+    var id = idElem.textContent.trim();
 
-  return [{
-    content: 'https://code.google.com/p/chromium/issues/detail?id=' + query,
-    description: [
-      '<match>', title, '</match> ',
-      '<dim>[', reporter, ']</dim> ',
-      '<url>crbug.com/', query, '</url>'
-    ].join('')
-  }];
+    // Owner is colum 7.
+    var ownerElem = row.getElementsByClassName('col_7')[0];
+    if (!ownerElem) return;
+    var owner = ownerElem.textContent.trim();
+
+    // The summary is column 8, except there are two column 8s and it's
+    // the second of those.
+    var summaryElem = row.getElementsByClassName('col_8')[1];
+    if (!summaryElem) return;
+    var summary = summaryElem.textContent.trim();
+
+    suggestions.push({
+      content: 'https://code.google.com/p/chromium/issues/detail?id=' + id,
+      description: [
+        '<match>', summary, '</match> ',
+        '<dim>[', owner, ']</dim> ',
+        '<url>crbug.com/', id, '</url>'
+      ].join('')
+    });
+  });
+  return suggestions;
+};
+
+CrbugSuggestions.prototype.shouldThrottle = function() {
+  // Otherwise crbug will show captchas.
+  return true;
 };
 
 /**
  * Suggestions for authors.
  */
 function AuthorSuggestions() {
+  this.__proto__.__proto__ = Suggestions.prototype;
 }
 
 AuthorSuggestions.prototype.getURL = function(query) {
@@ -186,34 +214,37 @@ function codesearchQuery(query) {
 var currentXhr = null;
 
 chrome.omnibox.onInputChanged.addListener(function(query, suggest) {
-  if (currentXhr) {
-    currentXhr.abort();
-    currentXhr = null;
-  }
-  currentXhr = new XMLHttpRequest();
+  var suggestions = new CodesearchSuggestions();
 
   // TODO: implement response caching if appropriate.
-  // TODO: rev:12345, author:kalman, etc.
-  var suggestions = {
-    'author': AuthorSuggestions,
-    'bug': CrbugSuggestions,
-  };
-
-  suggestObj = new CodesearchSuggestions();
-
-  var suggestionKeys = Object.getOwnPropertyNames(suggestions);
-  for (var i = 0; i < suggestionKeys.length; i++) {
-    var key = suggestionKeys[i];
+  // TODO: rev:12345, etc.
+  var config = [
+    ['author', AuthorSuggestions],
+    ['bug', CrbugSuggestions],
+  ];
+  for (var i = 0; i < config.length; i++) {
+    var key = config[i][0];
     if (startsWith(query, key + ':')) {
       query = query.slice(key.length + 1).trim();
-      suggestObj = new suggestions[key];
+      suggestions = new config[i][1];
       break;
     }
   }
 
-  currentXhr.open('GET', suggestObj.getURL(query), true);
+  if (!query)
+    return;
+
+  if (currentXhr && currentXhr.readyState != XMLHttpRequest.DONE) {
+    if (suggestions.shouldThrottle())
+      return;  // rough estimate of throttling
+    currentXhr.abort();
+  }
+  currentXhr = new XMLHttpRequest();
+
+  currentXhr.open('GET', suggestions.getURL(query), true);
   currentXhr.onload = function() {
-    suggest(suggestObj.getSuggestions(query, currentXhr.responseText));
+    suggest(suggestions.getSuggestions(query, currentXhr.responseText));
+    currentXhr = null;
   };
   currentXhr.send();
 });
