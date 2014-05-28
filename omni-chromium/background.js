@@ -56,13 +56,15 @@ CodesearchSuggestions.prototype.getSuggestions = function(query, response) {
   });
 
   return suggestions.map(function(suggest) {
+    var has_line = suggest.goto_line && suggest.goto_line > 1;
+
     // Construct the link that has been suggested.
     var href = [
       'https://code.google.com/p/chromium/codesearch#',
       suggest.goto_package_id, '/', suggest.goto_path, '&',
       'q=', query, '&',
       'sq=package:chromium&',
-      'goto_line' in suggest ? ('l=' + suggest.goto_line) : '',
+      has_line ? ('l=' + suggest.goto_line) : '',
     ].join('');
 
     // Simpler to always have a match_start/match_end.
@@ -84,7 +86,7 @@ CodesearchSuggestions.prototype.getSuggestions = function(query, response) {
         // The "url" is a bit of a lie, but it looks nice.
         ' <url>',
         suggest.goto_path,
-        'goto_line' in suggest ? (':' + suggest.goto_line) : '',
+        has_line ? (':' + suggest.goto_line) : '',
         '</url>'
       ].join('')
     };
