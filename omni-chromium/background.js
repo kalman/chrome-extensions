@@ -1,14 +1,30 @@
 // Copyright or something.
 
-function codesearchQuery(query) {
-  return [
-    'https://code.google.com/p/chromium/codesearch#search/',
-    '&q=', encodeURI(query),
-    '&sq=package:chromium&type=cs'
-  ].join('');
+function startsWith(str, start) {
+  return str.slice(0, start.length) == start;
+};
+
+/**
+ * Suggestions should implement this interface.
+ */
+function Suggestions() {
 }
 
-function codesearchSuggestQuery(query) {
+Suggestions.prototype.getURL = function() {
+  throw new Error();
+};
+
+Suggestions.prototype.getSuggestions = function(query, response) {
+  throw new Error();
+};
+
+/**
+ * Suggestions for codesearch.
+ */
+function CodesearchSuggestions() {
+}
+
+CodesearchSuggestions.prototype.getURL = function(query) {
   return [
     'https://code.google.com/p/cs/codesearch/codesearch/json?',
     'suggest_request=b&',
@@ -19,6 +35,106 @@ function codesearchSuggestQuery(query) {
     // parameter, but I don't know how to generate it, nor does it appear
     // to matter if it's left out.
   ].join('');
+};
+
+CodesearchSuggestions.prototype.getSuggestions = function(query, response) {
+  var suggestions = null;
+  try {
+    var response = JSON.parse(currentXhr.responseText);
+    suggestions = response.suggest_response[0].suggestion;
+    if (suggestions == null) {
+      // No suggestions.
+      return;
+    }
+  } catch (e) {
+    console.error('Invalid response: ' + currentXhr.responseText);
+    return;
+  }
+
+  suggestions.sort(function(s1, s2) {
+    return s1.score < s2.score;
+  });
+
+  return suggestions.map(function(suggest) {
+    // Construct the link that has been suggested.
+    var href = [
+      'https://code.google.com/p/chromium/codesearch#',
+      suggest.goto_package_id, '/', suggest.goto_path, '&',
+      'q=', query, '&',
+      'sq=package:chromium&',
+      'goto_line' in suggest ? ('l=' + suggest.goto_line) : '',
+    ].join('');
+
+    // Simpler to always have a match_start/match_end.
+    if (!('match_start' in suggest))
+      suggest.match_start = 0;
+    if (!('match_end' in suggest))
+      suggest.match_end = suggest.title.length;
+
+    return {
+      content: href,
+      description: [
+        // Title, with the matching text in bold.
+        suggest.title.slice(0, suggest.match_start),
+        '<match>',
+        suggest.title.slice(suggest.match_start, suggest.match_end),
+        '</match>',
+        suggest.title.slice(suggest.match_end),
+        // Path for the query, complete with :42 for line 42, if applicable.
+        // The "url" is a bit of a lie, but it looks nice.
+        ' <url>',
+        suggest.goto_path,
+        'goto_line' in suggest ? (':' + suggest.goto_line) : '',
+        '</url>'
+      ].join('')
+    };
+  });
+};
+
+/**
+ * Suggestions for crbugs.
+ */
+function CrbugSuggestions() {
+}
+
+CrbugSuggestions.prototype.getURL = function(query) {
+  return [
+    'https://code.google.com/p/chromium/issues/peek?',
+    'id=', query
+  ].join('');
+};
+
+CrbugSuggestions.prototype.getSuggestions = function(query, response) {
+  var dom = new DOMParser().parseFromString(response, 'text/html');
+  var titleElem = dom.querySelector('#issuesummary');
+  if (!titleElem) {
+    // No title element --> not a valid bug.
+    return [];
+  }
+  var title = titleElem.textContent;
+
+  var reporter = '(none)';
+  var userElem = dom.querySelector('.author .userlink');
+  if (userElem) {
+    reporter = userElem.textContent;
+  }
+
+  return [{
+    content: 'https://code.google.com/p/chromium/issues/detail?id=' + query,
+    description: [
+      '<match>', title, '</match> ',
+      '<dim>[', reporter, ']</dim> ',
+      '<url>crbug.com/', query, '</url>'
+    ].join('')
+  }];
+};
+
+function codesearchQuery(query) {
+  return [
+    'https://code.google.com/p/chromium/codesearch#search/',
+    '&q=', encodeURI(query),
+    '&sq=package:chromium&type=cs'
+  ].join('');
 }
 
 var currentXhr = null;
@@ -28,72 +144,26 @@ chrome.omnibox.onInputChanged.addListener(function(query, suggest) {
     currentXhr.abort();
     currentXhr = null;
   }
-
   currentXhr = new XMLHttpRequest();
-  currentXhr.open('GET', codesearchSuggestQuery(query), true);
 
+  suggestObj = new CodesearchSuggestions();
+  if (startsWith(query, 'bug:')) {
+    query = query.slice('bug:'.length);
+    suggestObj = new CrbugSuggestions();
+  }
+  // TODO: rev:12345, author:kalman, etc.
+
+  currentXhr.open('GET', suggestObj.getURL(query), true);
   currentXhr.onload = function() {
-    var suggestions = null;
-    try {
-      var response = JSON.parse(currentXhr.responseText);
-      suggestions = response.suggest_response[0].suggestion;
-      if (suggestions == null) {
-        // No suggestions.
-        return;
-      }
-    } catch (e) {
-      console.error('Invalid response: ' + currentXhr.responseText);
-      return;
-    }
-
-    suggestions.sort(function(s1, s2) {
-      return s1.score < s2.score;
-    });
-
-    suggest(suggestions.map(function(suggest) {
-      // Construct the link that has been suggested.
-      var href = [
-        'https://code.google.com/p/chromium/codesearch#',
-        suggest.goto_package_id, '/', suggest.goto_path, '&',
-        'q=', query, '&',
-        'sq=package:chromium&',
-        'goto_line' in suggest ? ('l=' + suggest.goto_line) : '',
-      ].join('');
-
-      // Simpler to always have a match_start/match_end.
-      if (!('match_start' in suggest))
-        suggest.match_start = 0;
-      if (!('match_end' in suggest))
-        suggest.match_end = suggest.title.length;
-
-      return {
-        content: href,
-        description: [
-          // Title, with the matching text in bold.
-          suggest.title.slice(0, suggest.match_start),
-          '<match>',
-          suggest.title.slice(suggest.match_start, suggest.match_end),
-          '</match>',
-          suggest.title.slice(suggest.match_end),
-          // Path for the query, complete with :42 for line 42, if applicable.
-          // The "url" is a bit of a lie, but it looks nice.
-          ' <url>',
-          suggest.goto_path,
-          'goto_line' in suggest ? (':' + suggest.goto_line) : '',
-          '</url>'
-        ].join('')
-      };
-    }));
+    suggest(suggestObj.getSuggestions(query, currentXhr.responseText));
   };
-
   currentXhr.send();
 });
 
 chrome.omnibox.onInputEntered.addListener(function(query, disposition) {
   // It might be an absolute URL if it came from a suggest. Otherwise, treat
   // it as a codesearch query.
-  var https = 'https:';
-  if (query.slice(0, https.length) != https)
+  if (!startsWith(query, 'https:'))
     query = codesearchQuery(query);
 
   var tabsFunction = chrome.tabs.create;
