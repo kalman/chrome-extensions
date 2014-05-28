@@ -48,7 +48,7 @@ CodesearchSuggestions.prototype.getSuggestions = function(query, response) {
     }
   } catch (e) {
     console.error('Invalid response: ' + currentXhr.responseText);
-    return = [];
+    return [];
   }
 
   suggestions.sort(function(s1, s2) {
