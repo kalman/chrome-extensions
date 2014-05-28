@@ -1,11 +1,16 @@
 .headbg, .gtb {
-    display: none;
+  display: none;
 }
 
 .sandbar {
-    height: 0px !important;
+  height: 0px !important;
+}
+
+.FUB {
+  display: none;
 }
 
 .MX {
-    top: -132px !important;
+  margin-top: 0px !important;
+  top: -132px !important;
 }
