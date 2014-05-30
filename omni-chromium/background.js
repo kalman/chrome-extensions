@@ -107,9 +107,14 @@ function CrbugSuggestions() {
 }
 
 CrbugSuggestions.prototype.getURL = function(query) {
+  // The query separates spaces with +, but encodes each component.
+  var encodedQuery = [];
+  query.split(' ').forEach(function(component) {
+    encodedQuery.push(encodeURI(component));
+  });
   return [
     'https://code.google.com/p/chromium/issues/list?',
-    'q=is:starred+', encodeURI(query), '&',
+    'q=is:starred+', encodedQuery.join('+'), '&',
     'sort=-id&',
     'colspec=ID%20Pri%20M%20Iteration%20ReleaseBlock%20Cr%20Status%20Owner%20',
     'Summary%20OS%20Modified'
@@ -145,7 +150,7 @@ CrbugSuggestions.prototype.getSuggestions = function(query, response) {
       content: 'https://code.google.com/p/chromium/issues/detail?id=' + id,
       description: [
         '<match>', summary, '</match> ',
-        '<dim>[', owner, ']</dim> ',
+        '<dim>(', owner, ')</dim> ',
         '<url>crbug.com/', id, '</url>'
       ].join('')
     });
@@ -212,6 +217,7 @@ function codesearchQuery(query) {
 }
 
 var currentXhr = null;
+var throttleTimeout = undefined;
 
 chrome.omnibox.onInputChanged.addListener(function(query, suggest) {
   var suggestions = new CodesearchSuggestions();
@@ -234,19 +240,26 @@ chrome.omnibox.onInputChanged.addListener(function(query, suggest) {
   if (!query)
     return;
 
-  if (currentXhr && currentXhr.readyState != XMLHttpRequest.DONE) {
-    if (suggestions.shouldThrottle())
-      return;  // rough estimate of throttling
-    currentXhr.abort();
-  }
-  currentXhr = new XMLHttpRequest();
-
-  currentXhr.open('GET', suggestions.getURL(query), true);
-  currentXhr.onload = function() {
-    suggest(suggestions.getSuggestions(query, currentXhr.responseText));
-    currentXhr = null;
+  var runQuery = function() {
+    if (currentXhr)
+      currentXhr.abort();
+    currentXhr = new XMLHttpRequest();
+    currentXhr.open('GET', suggestions.getURL(query), true);
+    currentXhr.onload = function() {
+      suggest(suggestions.getSuggestions(query, currentXhr.responseText));
+      currentXhr = null;
+    };
+    currentXhr.send();
   };
-  currentXhr.send();
+
+  if (suggestions.shouldThrottle()) {
+    // I guess that throttling == only searching if idle for > 1s.
+    if (typeof(throttleTimeout) != 'undefined')
+      clearTimeout(throttleTimeout);
+    throttleTimeout = setTimeout(runQuery, 1000);
+  } else {
+    runQuery();
+  }
 });
 
 chrome.omnibox.onInputEntered.addListener(function(query, disposition) {
