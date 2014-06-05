@@ -38,20 +38,33 @@ function showError(err) {
   });
 }
 
-// TODO: Promise-idiom to not require making this a global variable.
+// TODO: Promise-idiom to not require making these global variables.
 var backgroundPage = null;
+var activeTab = null;
 
 chrome.runtime.getBackgroundPage().then(function(bg) {
   backgroundPage = bg;
-  return backgroundPage.load();
+  return chrome.tabs.query({active: true});
 }, function(error) {
   showError(error + '\nwhile loading background page.');
+}).then(function(tabs) {
+  if (tabs.length > 0) {
+    activeTab = tabs[0];
+  }
+  return backgroundPage.load();
 }).then(function(snippets) {
-  // Shift+Enter closes popup.
   document.body.addEventListener('keydown', function(event) {
+    // Shift+Enter closes popup.
     if (event.keyCode == 13 && event.shiftKey) {
       event.preventDefault();
+      event.stopPropagation();
       window.close();
+    }
+    // Ctrl+Shift+L inserts the current URL at the cursor position.
+    if (event.keyCode == 76 && event.ctrlKey && activeTab) {
+      event.preventDefault();
+      event.stopPropagation();
+      document.execCommand('insertText', false, activeTab.url);
     }
   }, true);
 
@@ -65,6 +78,7 @@ chrome.runtime.getBackgroundPage().then(function(bg) {
 
   // Show a random tip.
   var tips = [
+    '<em>Ctrl + Shift + L</em> inserts the current URL at the cursor position',
     '<em>Shift + Enter</em> closes this popup',
     'Snippets are saved as you type',
   ];

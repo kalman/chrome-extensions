@@ -18,12 +18,12 @@
   "manifest_version": 2,
   "name": "Snippets",
   "optional_permissions": [
-    "<all_urls>"
+    "*://$(SNIPPETS_URL)/*"
   ],
   "permissions": [
     "activeTab",
     "storage",
     "tabs"
   ],
-  "version": "1.5"
+  "version": "6.1"
 }

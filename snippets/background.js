@@ -38,7 +38,7 @@ window.save = function save(newSnippets, onError) {
     return;
   }
   pendingSnippets = newSnippets;
-  setTimeout(function() {
+  window.setTimeout(function() {
     if (pendingSnippets === null) {
       if (onError) onError('Trying to save null snippets');
       return;
