@@ -20,5 +20,5 @@
   "options_page": "options.html",
   "name": "Browser Clock",
   "permissions": ["alarms", "storage"],
-  "version": "5"
+  "version": "5.1"
 }
