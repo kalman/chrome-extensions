@@ -7,7 +7,8 @@
     "default_icon": {
       "19": "assets/infinity19.png",
       "38": "assets/infinity38.png"
-    }
+    },
+    "default_popup": "options.html"
   },
   "description": "A clock for your browser",
   "icons": {
@@ -16,7 +17,8 @@
     "128": "assets/infinity128.png"
   },
   "manifest_version": 2,
+  "options_page": "options.html",
   "name": "Browser Clock",
   "permissions": ["alarms", "storage"],
-  "version": "1.4.1"
+  "version": "5"
 }

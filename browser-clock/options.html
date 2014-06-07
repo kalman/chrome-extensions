@@ -1,0 +1,45 @@
+<html>
+  <head>
+    <link href="chrome/css/chrome_shared.css" rel="stylesheet" type="text/css">
+    <style>
+      /* This is adapted from Chromium's settings page. See chrome/LICENSE. */
+      body {
+        display: flex;
+        font-family: 'Segoe UI',       /* Windows */
+                     'Noto Sans UI',   /* ChromeOS */
+                     'Ubuntu',         /* Ubuntu */
+                     'Lucida Grande',  /* OSX */
+                     Tahoma,           /* Windows #2 */
+                     sans-serif;       /* Other */
+        font-size: 75%;
+        justify-content: center;
+        margin: 0;
+        padding: 9px 18px 3px 18px;
+        -webkit-user-select: none;
+      }
+      .setting-with-label {
+        display: -webkit-box;
+        padding: 7px 0;
+        white-space: nowrap;
+      }
+      #loading {
+        background-color: rgba(255, 255, 255, 255);
+        position: fixed;
+        top: 0; right: 0; bottom: 0; left: 0;
+      }
+      #loading[done] {
+        background-color: rgba(255, 255, 255, 0);
+        transition-duration: 0.2s;
+        z-index: -1;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="setting-with-label">
+      <label><input name="is24Hour" type="checkbox"></input> 24 hour</label>
+    </div>
+    <div id="loading"></div>
+    <script src="options.js"></script>
+  </body>
+</html>

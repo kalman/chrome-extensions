@@ -1,20 +1,27 @@
-function getHoursImageData(date) {
+'use strict';
+
+function getHoursImageData(hours) {
   function create(size) {
     var canvas = document.createElement('canvas');
-    canvas.textContent = date.getHours() + ':' + getMinutesText(date);
     canvas.setAttribute('width', size);
     canvas.setAttribute('height', size);
     var context = canvas.getContext('2d');
-    context.font = 'bold ' + (size * 0.67) + 'px \'Lucida Grande\'';
+    context.font = 'bold ' + (size * 0.67) + 'px ' +
+                   '\'Segoe UI\', ' +       // Windows
+                   '\'Noto Sans UI\', ' +   // ChromeOS
+                   '\'Ubuntu\', ' +         // Ubuntu
+                   '\'Lucida Grande\', ' +  // OSX
+                   'Tahoma, ' +             // Windows#2
+                   'sans-serif';            // Other
     context.textAlign = 'center';
     context.textBaseline = 'middle';
-    context.fillText(date.getHours(), size/2, size/3);
+    context.fillText(hours, size/2, size/3);
     return context.getImageData(0, 0, size, size);
   }
   return {19: create(19), 38: create(38)};
 }
 
-function getMinutesText(date) {
+function formatMinutes(date) {
   var minutes = String(date.getMinutes());
   if (minutes.length == 1)
     minutes = '0' + minutes;
@@ -34,12 +41,29 @@ function quantizeMinutes(date) {
 }
 
 function update() {
-  var now = new Date();
-  var nearestMinute = quantizeMinutes(now).floor;
-  chrome.browserAction.setBadgeBackgroundColor({color: '#000'});
-  chrome.browserAction.setBadgeText({text: getMinutesText(nearestMinute)});
-  chrome.browserAction.setIcon({imageData: getHoursImageData(nearestMinute)});
-  chrome.browserAction.setTitle({title: String(now)});
+  chrome.storage.sync.get('is24Hour', function(settings) {
+    var now = new Date();
+    var quantized = quantizeMinutes(now).floor;
+    var nearestMinute = formatMinutes(quantized);
+    var nearestHour = quantized.getHours();
+    var isPM = false;
+    if (!settings.is24Hour && nearestHour > 12) {
+      nearestHour %= 12;
+      isPM = true;
+    }
+    chrome.browserAction.setBadgeBackgroundColor({color: '#000'});
+    chrome.browserAction.setBadgeText({text: nearestMinute});
+    chrome.browserAction.setIcon({imageData: getHoursImageData(nearestHour)});
+    // Hack to get a sensibly formatted full time, because generally speaking
+    // that's a real pain in JS without a library. However, toDateString()
+    // gives a nice enough date like "Sat Jun 07 2014", we just need to attach
+    // the time (depending on 24 preference) to the end.
+    var title = [now.toDateString(), ', ', nearestHour + ':' + nearestMinute];
+    if (!settings.is24Hour) {
+      title.push(isPM ? ' PM' : ' AM');
+    }
+    chrome.browserAction.setTitle({title: title.join('')});
+  });
 }
 
 chrome.runtime.onInstalled.addListener(function() {
@@ -57,3 +81,4 @@ chrome.runtime.onInstalled.addListener(function() {
 chrome.alarms.onAlarm.addListener(update);
 chrome.browserAction.onClicked.addListener(update);
 chrome.runtime.onStartup.addListener(update);
+chrome.storage.onChanged.addListener(update);
