@@ -46,10 +46,9 @@ function update() {
     var quantized = quantizeMinutes(now).floor;
     var nearestMinute = formatMinutes(quantized);
     var nearestHour = quantized.getHours();
-    var isPM = false;
+    var isPM = nearestHour >= 12;
     if (!settings.is24Hour && nearestHour > 12) {
       nearestHour %= 12;
-      isPM = true;
     }
     chrome.browserAction.setBadgeBackgroundColor({color: '#000'});
     chrome.browserAction.setBadgeText({text: nearestMinute});
