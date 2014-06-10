@@ -25,7 +25,7 @@
   snippetsElem.style.width = popupWidth + 'px';
 }());
 
-function showError(err) {
+function onError(err) {
   document.getElementById('errorLog').innerText = err;
   document.getElementById('errorContainer').removeAttribute('hidden');
   document.getElementById('snippets').disabled = true;
@@ -46,13 +46,23 @@ chrome.runtime.getBackgroundPage().then(function(bg) {
   backgroundPage = bg;
   return chrome.tabs.query({active: true, currentWindow: true});
 }, function(error) {
-  showError(error + '\nwhile loading background page.');
+  onError(error + '\nwhile loading background page.');
 }).then(function(tabs) {
   if (tabs.length > 0) {
     activeTab = tabs[0];
   }
   return backgroundPage.load();
 }).then(function(snippets) {
+  // In a previous version of this extension the snippets were just a string
+  // (the text), then they came to include the cursor position as well.
+  if (typeof snippets == 'string') {
+    snippets = {
+      selectionStart: 0,
+      selectionEnd: 0,
+      value: snippets
+    };
+  }
+
   document.body.addEventListener('keydown', function(event) {
     // Shift+Enter closes popup.
     if (event.keyCode == 13 && event.shiftKey) {
@@ -87,18 +97,21 @@ chrome.runtime.getBackgroundPage().then(function(bg) {
 
   // Snippets are ready. Start writing.
   var snippetsElem = document.getElementById('snippets');
-  snippetsElem.style.height = 
+  snippetsElem.disabled = false;
   snippetsElem.placeholder = 'Start writing!';
   snippetsElem.focus();
-  snippetsElem.value = snippets;
-  snippetsElem.disabled = false;
-  // Why. does. this. not. work.
-  snippetsElem.selectionStart = snippetsElem.selectionEnd = snippets.length;
+  snippetsElem.value = snippets.value;
+  snippetsElem.selectionStart = snippets.selectionStart;
+  snippetsElem.selectionEnd = snippets.selectionEnd;
   snippetsElem.addEventListener('keyup', function() {
-    backgroundPage.save(snippetsElem.value || '', showError);
+    backgroundPage.save({
+      selectionStart: snippetsElem.selectionStart,
+      selectionEnd: snippetsElem.selectionEnd,
+      value: snippetsElem.value || '',
+    }, onError);
   });
 }, function(error) {
-  showError(error + '\nwhile loading snippets.');
+  onError(error + '\nwhile loading snippets.');
 });
 
 }());
