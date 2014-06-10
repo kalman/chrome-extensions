@@ -1,41 +1,48 @@
 // Copyright or something.
 'use strict';
 
-function startsWith(str, start) {
-  return str.slice(0, start.length) == start;
-};
-
-/**
- * Suggestions should implement this interface.
- */
-function Suggestions() {
+function inherits(childCtor, parentCtor) {
+  function tempCtor() {}
+  tempCtor.prototype = parentCtor.prototype;
+  childCtor.prototype = new tempCtor();
+  childCtor.prototype.constructor = childCtor;
 }
 
-Suggestions.prototype.getURL = function() {
+function startsWith(str, start) {
+  return str.slice(0, start.length) == start;
+}
+
+function Searcher(query) {
+  this.query = query;
+}
+
+Searcher.prototype.getSuggestionsURL = function() {
   throw new Error('Not implemented');
 };
 
-Suggestions.prototype.getSuggestions = function(query, response) {
+Searcher.prototype.getSuggestions = function(content) {
   throw new Error('Not implemented');
 };
 
-Suggestions.prototype.shouldThrottle = function() {
+Searcher.prototype.getSearchURL = function() {
+  throw new Error('Not implemented');
+};
+
+Searcher.prototype.shouldThrottle = function() {
   return false;
 };
 
-/**
- * Suggestions for codesearch.
- */
-function CodesearchSuggestions() {
-  this.__proto__.__proto__ = Suggestions.prototype;
+function CodesearchSearcher(query) {
+  Searcher.call(this, query);
 }
+inherits(CodesearchSearcher, Searcher);
 
-CodesearchSuggestions.prototype.getURL = function(query) {
+CodesearchSearcher.prototype.getSuggestionsURL = function() {
   return [
     'https://code.google.com/p/cs/codesearch/codesearch/json?',
     'suggest_request=b&',
-    'query=', encodeURI(query), '+package%3Achromium&',
-    'query_cursor_position=' + query.length, '&',
+    'query=', encodeURI(this.query), '+package%3Achromium&',
+    'query_cursor_position=' + this.query.length, '&',
     'suggest_request=e'
     // Note: when invoking from cs.chromium.org there is also a "sid"
     // parameter, but I don't know how to generate it, nor does it appear
@@ -43,7 +50,7 @@ CodesearchSuggestions.prototype.getURL = function(query) {
   ].join('');
 };
 
-CodesearchSuggestions.prototype.getSuggestions = function(query, response) {
+CodesearchSearcher.prototype.getSuggestions = function(response) {
   var suggestions = null;
   try {
     var response = JSON.parse(currentXhr.responseText);
@@ -61,14 +68,14 @@ CodesearchSuggestions.prototype.getSuggestions = function(query, response) {
     return s1.score < s2.score;
   });
 
-  return suggestions.map(function(suggest) {
+  window.cs = suggestions.map(function(suggest) {
     var has_line = suggest.goto_line && suggest.goto_line > 1;
 
     // Construct the link that has been suggested.
     var href = [
       'https://code.google.com/p/chromium/codesearch#',
       suggest.goto_package_id, '/', suggest.goto_path, '&',
-      'q=', encodeURI(query), '&',
+      'q=', encodeURI(this.query), '&',
       'sq=package:chromium&',
       has_line ? ('l=' + suggest.goto_line) : '',
     ].join('');
@@ -96,35 +103,51 @@ CodesearchSuggestions.prototype.getSuggestions = function(query, response) {
         '</url>'
       ].join('')
     };
-  });
+  }.bind(this));
+  return window.cs;
 };
 
-/**
- * Suggestions for crbugs.
- */
-function CrbugSuggestions() {
-  this.__proto__.__proto__ = Suggestions.prototype;
-}
-
-CrbugSuggestions.prototype.getURL = function(query) {
-  // The query separates spaces with +, but encodes each component.
-  var encodedQuery = [];
-  query.split(' ').forEach(function(component) {
-    encodedQuery.push(encodeURI(component));
-  });
+CodesearchSearcher.prototype.getSearchURL = function() {
   return [
-    'https://code.google.com/p/chromium/issues/list?',
-    'q=is:starred+', encodedQuery.join('+'), '&',
-    'sort=-id&',
-    'colspec=ID%20Pri%20M%20Iteration%20ReleaseBlock%20Cr%20Status%20Owner%20',
-    'Summary%20OS%20Modified'
+    'https://code.google.com/p/chromium/codesearch#search/',
+    '&q=', encodeURI(this.query),
+    '&sq=package:chromium&type=cs'
   ].join('');
 };
 
-CrbugSuggestions.prototype.getSuggestions = function(query, response) {
+function CrbugSearcher(query) {
+  Searcher.call(this, query);
+}
+inherits(CrbugSearcher, Searcher);
+
+CrbugSearcher.prototype.getSuggestionsURL = function() {
+  return this.isBugQuery_() ? this.getBugURL_() : this.getIssueListURL_();
+};
+
+CrbugSearcher.prototype.getSuggestions = function(response) {
   // I would use DOMParser here but it crashes on this input for some reason.
   var dom = document.createElement('div');
   dom.innerHTML = response;
+
+  function getBugDescription(summary, owner, id) {
+    var description = '<match>' + summary + '</match> ';
+    if (owner) {
+      description += '<dim>' + owner + '</dim> ';
+    }
+    return description + '<url>crbug.com/' + id + '</url>';
+  }
+
+  if (this.isBugQuery_()) {
+    var summaryElem = dom.querySelector('#issueheader span.h3');
+    if (!summaryElem)
+      return [];
+    var ownerElem = dom.querySelector('#issuemeta tr:nth-child(2) a.userlink');
+    var owner = ownerElem ? ownerElem.textContent : '--';
+    return [{
+      content: this.getBugURL_(),
+      description: getBugDescription(summaryElem.textContent, owner, this.query)
+    }];
+  }
 
   var suggestions = []
   Array.prototype.forEach.call(
@@ -147,34 +170,59 @@ CrbugSuggestions.prototype.getSuggestions = function(query, response) {
     var summary = summaryElem.textContent.trim();
 
     suggestions.push({
-      content: 'https://code.google.com/p/chromium/issues/detail?id=' + id,
-      description: [
-        '<match>', summary, '</match> ',
-        '<dim>(', owner, ')</dim> ',
-        '<url>crbug.com/', id, '</url>'
-      ].join('')
+      content: CrbugSearcher.getCodeGoogleComIssue_(id),
+      description: getBugDescription(summary, owner, id)
     });
-  });
+  }.bind(this));
   return suggestions;
 };
 
-CrbugSuggestions.prototype.shouldThrottle = function() {
+CrbugSearcher.prototype.shouldThrottle = function() {
   // Otherwise crbug will show captchas.
   return true;
 };
 
-/**
- * Suggestions for authors.
- */
-function AuthorSuggestions() {
-  this.__proto__.__proto__ = Suggestions.prototype;
-}
+CrbugSearcher.prototype.getSearchURL = function() {
+  return this.isBugQuery_() ? this.getBugURL_() : this.getIssueListURL_();
+};
 
-AuthorSuggestions.prototype.getURL = function(query) {
+CrbugSearcher.prototype.isBugQuery_ = function() {
+  return !isNaN(Number.parseInt(this.query));
+};
+
+CrbugSearcher.prototype.getBugURL_ = function() {
+  return CrbugSearcher.getCodeGoogleComIssue_(this.query);
+};
+
+CrbugSearcher.getCodeGoogleComIssue_ = function(issueNumber) {
+  return 'https://code.google.com/p/chromium/issues/detail?id=' + issueNumber;
+};
+
+CrbugSearcher.prototype.getIssueListURL_ = function() {
+  // The query separates spaces with +, but encodes each component.
+  var encodedQuery = [];
+  this.query.split(' ').forEach(function(component) {
+    encodedQuery.push(encodeURI(component));
+  });
+  return [
+    'https://code.google.com/p/chromium/issues/list?',
+    'q=is:starred+', encodedQuery.join('+'), '&',
+    'sort=-id&',
+    'colspec=ID%20Pri%20M%20Iteration%20ReleaseBlock%20Cr%20Status%20Owner%20',
+    'Summary%20OS%20Modified'
+  ].join('');
+};
+
+function AuthorSearcher(query) {
+  Searcher.call(this, query);
+}
+inherits(AuthorSearcher, Searcher);
+
+AuthorSearcher.prototype.getSuggestionsURL = function() {
   return 'https://code.google.com/p/chromium/feeds/issueOptions';
 };
 
-AuthorSuggestions.prototype.getSuggestions = function(query, response) {
+AuthorSearcher.prototype.getSuggestions = function(response) {
   // |response| has the XSSI protection. Strip it.
   response = response.slice(response.indexOf('{'));
 
@@ -189,18 +237,14 @@ AuthorSuggestions.prototype.getSuggestions = function(query, response) {
   var suggestions = [];
   for (var i = 0; i < members.length; i++) {
     var member = members[i].name;
-    var memberIndex = member.indexOf(query);
+    var memberIndex = member.indexOf(this.query);
     if (memberIndex === 0) {
       suggestions.push({
-        content: [
-          'https://git.chromium.org/gitweb/?',
-          'p=chromium.git&a=search&h=HEAD&st=author&s=',
-          member
-        ].join(''),
+        content: AuthorSearcher.getGitChromiumOrgAuthorSearch_(member),
         description: [
           member.slice(0, memberIndex),
-          '<match>', member.slice(memberIndex, query.length), '</match>',
-          member.slice(memberIndex + query.length)
+          '<match>', member.slice(memberIndex, this.query.length), '</match>',
+          member.slice(memberIndex + this.query.length)
         ].join('')
       });
     }
@@ -208,51 +252,58 @@ AuthorSuggestions.prototype.getSuggestions = function(query, response) {
   return suggestions;
 };
 
-function codesearchQuery(query) {
+AuthorSearcher.prototype.getSearchURL = function() {
+  return AuthorSearcher.getGitChromiumOrgAuthorSearch_(this.query);
+};
+
+AuthorSearcher.getGitChromiumOrgAuthorSearch_ = function(author) {
   return [
-    'https://code.google.com/p/chromium/codesearch#search/',
-    '&q=', encodeURI(query),
-    '&sq=package:chromium&type=cs'
+    'https://git.chromium.org/gitweb/?',
+    'p=chromium.git&a=search&h=HEAD&st=author&s=',
+    encodeURI(author)
   ].join('');
+};
+
+function getSearcher(query) {
+  // TODO: rev:12345, etc.
+  var config = [
+    ['author', AuthorSearcher],
+    ['bug', CrbugSearcher],
+    ['cs', CodesearchSearcher],
+  ];
+  for (var i = 0; i < config.length; i++) {
+    var keyword = config[i][0] + ':';
+    if (startsWith(query, keyword)) {
+      return new config[i][1](query.slice(keyword.length).trim());
+    }
+  }
+  return new CodesearchSearcher(query);
 }
 
 var currentXhr = null;
 var throttleTimeout = undefined;
 
-chrome.omnibox.onInputChanged.addListener(function(query, suggest) {
-  var suggestions = new CodesearchSuggestions();
-
-  // TODO: implement response caching if appropriate.
-  // TODO: rev:12345, etc.
-  var config = [
-    ['author', AuthorSuggestions],
-    ['bug', CrbugSuggestions],
-  ];
-  for (var i = 0; i < config.length; i++) {
-    var key = config[i][0];
-    if (startsWith(query, key + ':')) {
-      query = query.slice(key.length + 1).trim();
-      suggestions = new config[i][1];
-      break;
-    }
+chrome.omnibox.onInputChanged.addListener(function(query_, suggest) {
+  var searcher = getSearcher(query_);
+  if (!searcher.query) {
+    suggest([]);
+    return;
   }
 
-  if (!query)
-    return;
-
   var runQuery = function() {
+    // TODO: Implement response caching if appropriate?
     if (currentXhr)
       currentXhr.abort();
     currentXhr = new XMLHttpRequest();
-    currentXhr.open('GET', suggestions.getURL(query), true);
+    currentXhr.open('GET', searcher.getSuggestionsURL(), true);
     currentXhr.onload = function() {
-      suggest(suggestions.getSuggestions(query, currentXhr.responseText));
+      suggest(searcher.getSuggestions(currentXhr.responseText));
       currentXhr = null;
     };
     currentXhr.send();
   };
 
-  if (suggestions.shouldThrottle()) {
+  if (searcher.shouldThrottle()) {
     // I guess that throttling == only searching if idle for > 1s.
     if (typeof(throttleTimeout) != 'undefined')
       clearTimeout(throttleTimeout);
@@ -263,10 +314,12 @@ chrome.omnibox.onInputChanged.addListener(function(query, suggest) {
 });
 
 chrome.omnibox.onInputEntered.addListener(function(query, disposition) {
-  // It might be an absolute URL if it came from a suggest. Otherwise, treat
-  // it as a codesearch query.
-  if (!startsWith(query, 'https:'))
-    query = codesearchQuery(query);
+  // If it's not an absolute URL (which may come from the user accepting a
+  // suggestion) then use the searcher.
+  if (!startsWith(query, 'http:') && !startsWith(query, 'https:')) {
+    var searcher = getSearcher(query);
+    query = searcher.getSearchURL();
+  }
 
   var tabsFunction = chrome.tabs.create;
   var tabsOptions = {

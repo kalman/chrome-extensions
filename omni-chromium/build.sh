@@ -4,4 +4,4 @@ cd assets
 ./build.sh
 cd ..
 
-zip omni-chromium.zip -r assets background.js hidebanner.css manifest.json
+zip omni-chromium.zip -r assets *.css *.js manifest.json

@@ -9,14 +9,14 @@
       "css": ["hidebanner.css"]
     }
   ],
-  "description": "Chromium developer tools in the Omnibox",
+  "description": "Chromium developer search for the Omnibox",
   "icons": {
     "16": "assets/chromium16.png",
     "48": "assets/chromium48.png",
     "128": "assets/chromium128.png"
   },
   "manifest_version": 2,
-  "name": "Omni-Chromium",
+  "name": "OmniChromium",
   "omnibox": {
     "keyword": "cr"
   },
@@ -24,5 +24,5 @@
     "storage",
     "https://code.google.com/p/cs/codesearch/codesearch/json/*"
   ],
-  "version": "5.1"
+  "version": "6.0"
 }
