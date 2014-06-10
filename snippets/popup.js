@@ -44,7 +44,7 @@ var activeTab = null;
 
 chrome.runtime.getBackgroundPage().then(function(bg) {
   backgroundPage = bg;
-  return chrome.tabs.query({active: true});
+  return chrome.tabs.query({active: true, currentWindow: true});
 }, function(error) {
   showError(error + '\nwhile loading background page.');
 }).then(function(tabs) {
