@@ -74,7 +74,22 @@ chrome.runtime.getBackgroundPage().then(function(bg) {
     if (event.keyCode == 76 && event.ctrlKey && activeTab) {
       event.preventDefault();
       event.stopPropagation();
-      document.execCommand('insertText', false, activeTab.url);
+      var url = activeTab.url;
+      // Rewrite the URL to something friendlier if possible.
+      // TODO(kalman): Make this configurable in an options page.
+      var rewrites = [
+        [/codereview\.chromium\.org\/([0-9]+)/, 'http://crrev.com/$1'],
+        [/code\.google\.com\/.*[?&]id=([0-9]+)/, 'http://crbug.com/$1'],
+        [/src\.chromium\.org\/.*[?&]revision=([0-9]+)/, 'http://crrev.com/$1'],
+      ];
+      for (var i = 0; i < rewrites.length; i++) {
+        var exec = rewrites[i][0].exec(url)
+        if (exec) {
+          url = rewrites[i][1].replace('$1', exec[1]);
+          break;
+        }
+      };
+      document.execCommand('insertText', false, url);
     }
   }, true);
 

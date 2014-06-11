@@ -1,7 +1,7 @@
 #!/bin/sh
 
 SNIPPETS_URL="$1"
-read -n1 -p "Snippets URL \"$SNIPPETS_URL\" ok [y/N]? " OK
+read -n1 -p "Snippets URL \"$SNIPPETS_URL\" ok? [y/N] " OK
 if [ "$OK" != y ]; then
   exit 1
 fi
