@@ -68,7 +68,7 @@ function promptAndInject(textarea, snippets) {
   var paste = buttonHolder.appendChild(document.createElement('button'));
   paste.textContent = 'Paste';
   paste.addEventListener('click', function() {
-    textarea.value = snippets;
+    textarea.value = snippets.value;
     // Hack: trigger snippets saving.
     textarea.dispatchEvent(new CustomEvent('change'));
     // Hack: focus the submit button before closing.
