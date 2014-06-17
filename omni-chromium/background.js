@@ -4,6 +4,7 @@
 function getSearcher(query) {
   // TODO: rev:12345, etc.
   var config = [
+    ['a', AuthorSearcher],
     ['author', AuthorSearcher],
     ['b', CrbugSearcher],
     ['bug', CrbugSearcher],
