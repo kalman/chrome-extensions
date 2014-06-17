@@ -1,6 +1,12 @@
 {
   "background": {
-    "scripts": ["background.js"],
+    "scripts": [
+      "common.js",
+      "author.js",
+      "codesearch.js",
+      "crbug.js",
+      "background.js"
+    ],
     "persistent": false
   },
   "content_scripts": [
@@ -9,7 +15,7 @@
       "css": ["hidebanner.css"]
     }
   ],
-  "description": "Chromium developer search for the Omnibox",
+  "description": "Chromium search tools in the Omnibox",
   "icons": {
     "16": "assets/chromium16.png",
     "48": "assets/chromium48.png",
