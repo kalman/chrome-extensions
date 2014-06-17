@@ -5,8 +5,11 @@ function getSearcher(query) {
   // TODO: rev:12345, etc.
   var config = [
     ['author', AuthorSearcher],
+    ['b', CrbugSearcher],
     ['bug', CrbugSearcher],
     ['cs', CodesearchSearcher],
+    ['r', CrrevSearcher],
+    ['rev', CrrevSearcher],
   ];
   for (var i = 0; i < config.length; i++) {
     var keyword = config[i][0] + ':';

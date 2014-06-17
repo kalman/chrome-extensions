@@ -5,6 +5,7 @@
       "author.js",
       "codesearch.js",
       "crbug.js",
+      "crrev.js",
       "background.js"
     ],
     "persistent": false
@@ -30,5 +31,5 @@
     "storage",
     "https://code.google.com/p/cs/codesearch/codesearch/json/*"
   ],
-  "version": "6.0"
+  "version": "7.0"
 }
