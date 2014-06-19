@@ -11,9 +11,7 @@ CrbugSearcher.prototype.getSuggestionsURL = function() {
 };
 
 CrbugSearcher.prototype.getSuggestions = function(response) {
-  // I would use DOMParser here but it crashes on this input for some reason.
-  var dom = document.createElement('div');
-  dom.innerHTML = response;
+  var dom = new DOMParser().parseFromString(response, 'text/html');
 
   function getBugDescription(summary, owner, id) {
     var description = '<match>' + summary + '</match> ';
