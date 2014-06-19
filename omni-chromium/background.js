@@ -1,21 +1,28 @@
 // Copyright or something.
+(function() {
 'use strict';
 
+var CONFIG = [
+  [['a', 'author'], AuthorSearcher, 'Commits by author'],
+  [['b', 'bug'], CrbugSearcher, 'Your bugs', 'search "commentby:me"'],
+  [['c', 'cs'], CodesearchSearcher, 'Chromium code', 'default'],
+  [['r', 'rev'], CrrevSearcher, 'Chromium revision'],
+];
+
+function describeKeywords(keywords) {
+  return keywords.map(function(kw) {
+    return '<url>' + kw + ':</url>'
+  }).join(' or ');
+}
+
 function getSearcher(query) {
-  // TODO: rev:12345, etc.
-  var config = [
-    ['a', AuthorSearcher],
-    ['author', AuthorSearcher],
-    ['b', CrbugSearcher],
-    ['bug', CrbugSearcher],
-    ['cs', CodesearchSearcher],
-    ['r', CrrevSearcher],
-    ['rev', CrrevSearcher],
-  ];
-  for (var i = 0; i < config.length; i++) {
-    var keyword = config[i][0] + ':';
-    if (startsWith(query, keyword)) {
-      return new config[i][1](query.slice(keyword.length).trim());
+  for (var i = 0; i < CONFIG.length; i++) {
+    var keywords = CONFIG[i][0];
+    for (var j = 0; j < keywords.length; j++) {
+      var keyword = keywords[j] + ':';
+      if (startsWith(query, keyword)) {
+        return new CONFIG[i][1](query.slice(keyword.length).trim());
+      }
     }
   }
   return new CodesearchSearcher(query);
@@ -24,8 +31,22 @@ function getSearcher(query) {
 var currentXhr = null;
 var throttleTimeout = undefined;
 
-chrome.omnibox.onInputChanged.addListener(function(query_, suggest) {
-  var searcher = getSearcher(query_);
+chrome.omnibox.onInputChanged.addListener(function(query, suggest) {
+  if (startsWith(query, '?') || query == '') {
+    suggest(CONFIG.map(function(it) {
+      var desc = describeKeywords(it[0]) + ' - <match>' + it[2] + '</match>';
+      if (it[3]) {
+        desc += ' <dim>(' + it[3] + ')</dim>';
+      }
+      return {
+        content: it[0][0] + ': ',
+        description: desc
+      }
+    }));
+    return;
+  }
+
+  var searcher = getSearcher(query);
   if (!searcher.query) {
     suggest([]);
     return;
@@ -55,11 +76,10 @@ chrome.omnibox.onInputChanged.addListener(function(query_, suggest) {
 });
 
 chrome.omnibox.onInputEntered.addListener(function(query, disposition) {
-  // If it's not an absolute URL (which may come from the user accepting a
-  // suggestion) then use the searcher.
-  if (!startsWith(query, 'http:') && !startsWith(query, 'https:')) {
-    var searcher = getSearcher(query);
-    query = searcher.getSearchURL();
+  if (!startsWith(query, 'http:', 'https:')) {
+    // If it's not an absolute URL (which may come from the user accepting a
+    // suggestion) then use the searcher.
+    query = getSearcher(query).getSearchURL();
   }
 
   var tabsFunction = chrome.tabs.create;
@@ -77,3 +97,12 @@ chrome.omnibox.onInputEntered.addListener(function(query, disposition) {
 
   tabsFunction(tabsOptions);
 });
+
+var commands = CONFIG.map(function(it) {
+  return describeKeywords(it[0]);
+});
+chrome.omnibox.setDefaultSuggestion({
+  description: 'Commands: <url>?</url>, ' + commands.join(', ')
+});
+
+}());

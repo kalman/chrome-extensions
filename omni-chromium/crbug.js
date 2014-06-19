@@ -92,7 +92,7 @@ CrbugSearcher.prototype.getIssueListURL_ = function() {
   });
   return [
     'https://code.google.com/p/chromium/issues/list?',
-    'q=is:starred+', encodedQuery.join('+'), '&',
+    'q=commentby:me+', encodedQuery.join('+'), '&',
     'sort=-id&',
     'colspec=ID%20Pri%20M%20Iteration%20ReleaseBlock%20Cr%20Status%20Owner%20',
     'Summary%20OS%20Modified'

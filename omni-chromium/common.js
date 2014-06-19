@@ -8,8 +8,13 @@ function inherits(childCtor, parentCtor) {
   childCtor.prototype.constructor = childCtor;
 }
 
-function startsWith(str, start) {
-  return str.slice(0, start.length) == start;
+function startsWith(str /* varargs */) {
+  for (var i = 1; i < arguments.length; i++) {
+    if (str.slice(0, arguments[i].length) == arguments[i]) {
+      return true;
+    }
+  }
+  return false;
 }
 
 function Searcher(query) {

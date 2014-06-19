@@ -22,8 +22,8 @@ CodesearchSearcher.prototype.getSuggestionsURL = function() {
 CodesearchSearcher.prototype.getSuggestions = function(response) {
   var suggestions = null;
   try {
-    var response = JSON.parse(currentXhr.responseText);
-    suggestions = response.suggest_response[0].suggestion;
+    var responseJson = JSON.parse(response);
+    suggestions = responseJson.suggest_response[0].suggestion;
     if (suggestions == null) {
       // No suggestions.
       return [];
