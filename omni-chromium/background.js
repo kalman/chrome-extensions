@@ -4,7 +4,7 @@
 
 var CONFIG = [
   [['a', 'author'], AuthorSearcher, 'Commits by author'],
-  [['b', 'bug'], CrbugSearcher, 'Your bugs', 'search "commentby:me"'],
+  [['b', 'bug'], CrbugSearcher, 'Your bugs or a bug ID', 'search "commentby:me"'],
   [['c', 'cs'], CodesearchSearcher, 'Chromium code', 'this is the default'],
   [['r', 'rev'], CrrevSearcher, 'Chromium revision'],
 ];
