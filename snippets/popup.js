@@ -2,6 +2,17 @@
 
 (function() {
 
+function scrollSelectionIntoView(elem) {
+  var countLines = function(str) {
+    var newlineMatches = str.match(/\n/g);
+    return (newlineMatches ? newlineMatches.length : 0) + 1;
+  };
+  var lineHeight = elem.scrollHeight / countLines(elem.value);
+  var cursorTop =
+      countLines(elem.value.slice(0, elem.selectionStart)) * lineHeight;
+  elem.scrollTop = cursorTop - (elem.offsetHeight / 2);
+}
+
 // Resize everything to fit snugly inside the popup.
 (function() {
   var popup = document.documentElement;
@@ -77,6 +88,7 @@ chrome.runtime.getBackgroundPage().then(function(bg) {
       var url = activeTab.url;
       // Rewrite the URL to something friendlier if possible.
       // TODO(kalman): Make this configurable in an options page.
+      // TODO(kalman): Work with gitiles.
       var rewrites = [
         [/codereview\.chromium\.org\/([0-9]+)/, 'http://crrev.com/$1'],
         [/code\.google\.com\/.*[?&]id=([0-9]+)/, 'http://crbug.com/$1'],
@@ -118,13 +130,16 @@ chrome.runtime.getBackgroundPage().then(function(bg) {
   snippetsElem.value = snippets.value;
   snippetsElem.selectionStart = snippets.selectionStart;
   snippetsElem.selectionEnd = snippets.selectionEnd;
-  snippetsElem.addEventListener('keyup', function() {
+  scrollSelectionIntoView(snippetsElem);
+  function save() {
     backgroundPage.save({
       selectionStart: snippetsElem.selectionStart,
       selectionEnd: snippetsElem.selectionEnd,
       value: snippetsElem.value || '',
     }, onError);
-  });
+  }
+  snippetsElem.addEventListener('keyup', save);
+  snippetsElem.addEventListener('mouseup', save);
 }, function(error) {
   onError(error + '\nwhile loading snippets.');
 });

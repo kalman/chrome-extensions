@@ -1,6 +1,6 @@
 {
   "background": {
-    "scripts": ["promise.js", "background.js"],
+    "scripts": ["promise.js", "persistent_string.js", "background.js"],
     "persistent": false
   },
   "browser_action": {
@@ -25,5 +25,5 @@
     "storage",
     "tabs"
   ],
-  "version": "8.1"
+  "version": "8.2"
 }

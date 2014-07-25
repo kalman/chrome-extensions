@@ -5,6 +5,14 @@
 var SNIPPETS_URL = 'https://$(SNIPPETS_URL)';
 var SAVE_FREQUENCY_MS = 3000;
 
+function CreatePersistentSnippets() {
+  return new PersistentString('snippets', 16, function(value) {
+    // Migration from when the snippets string and selection data were stored
+    // in the same storage key.
+    return typeof value == 'object' ? value.value : value;
+  });
+}
+
 // A Promise to the latest call to a storage operation, so that they can be
 // easily run in serial and not stomp on each other.
 var pendingStorageOp = Promise.resolve();
@@ -21,9 +29,18 @@ window.load = function load() {
   }
   return new Promise(function(resolve, reject) {
     pendingStorageOp = pendingStorageOp.then(function() {
-      return chrome.storage.sync.get('snippets');
+      return Promise.all([
+        CreatePersistentSnippets().get(),
+        chrome.storage.sync.get(['selectionStart', 'selectionEnd']),
+      ]).then(function(all) {
+        return {
+          value: all[0],
+          selectionStart: all[1].selectionStart,
+          selectionEnd: all[1].selectionEnd,
+        };
+      }, reject);
     }, reject).then(function(result) {
-      resolve(result.snippets || '');
+      resolve(result);
     }, reject);
   });
 };
@@ -45,7 +62,13 @@ window.save = function save(newSnippets, onError) {
     }
     pendingStorageOp = pendingStorageOp.then(function() {
       try {
-        return chrome.storage.sync.set({snippets: pendingSnippets});
+        return Promise.all([
+          CreatePersistentSnippets().set(pendingSnippets.value),
+          chrome.storage.sync.set({
+            selectionStart: pendingSnippets.selectionStart,
+            selectionEnd: pendingSnippets.selectionEnd,
+          }),
+        ]);
       } finally {
         pendingSnippets = null;
       }
