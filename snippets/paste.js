@@ -2,19 +2,19 @@
 
 (function() {
 
-chrome.storage.sync.get('snippets', function(storage) {
-  if (!storage.snippets) {
+PersistentString.ForSnippets().get().then(function(snippets) {
+  if (!snippets) {
     console.warn('No snippets to inject');
     return;
   }
 
   var textareas = document.getElementsByTagName('textarea');
   if (textareas.length > 0) {
-    promptAndInject(textareas[0], storage.snippets);
+    promptAndInject(textareas[0], snippets);
   } else {
     var observer = new MutationObserver(function(mutations) {
       if (textareas.length > 0) {
-        promptAndInject(textareas[0], storage.snippets);
+        promptAndInject(textareas[0], snippets);
         observer.disconnect();
       }
     });
@@ -68,7 +68,7 @@ function promptAndInject(textarea, snippets) {
   var paste = buttonHolder.appendChild(document.createElement('button'));
   paste.textContent = 'Paste';
   paste.addEventListener('click', function() {
-    textarea.value = snippets.value;
+    textarea.value = snippets;
     // Hack: trigger snippets saving.
     textarea.dispatchEvent(new CustomEvent('change'));
     // Hack: focus the submit button before closing.

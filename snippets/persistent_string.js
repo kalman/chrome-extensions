@@ -34,6 +34,19 @@ function PersistentString(prefix, numBuckets, loadHook) {
 }
 
 /**
+ * Constructs a PersistentString suitable for storing snippets.
+ *
+ * @return {PersistentString}
+ */
+PersistentString.ForSnippets = function() {
+  return new PersistentString('snippets', 16, function(value) {
+    // Migration from when the snippets string and selection data were stored
+    // in the same storage key.
+    return typeof value == 'object' ? value.value : value;
+  });
+};
+
+/**
  * Sets the value that this PersistentString backs.
  *
  * @param {string} value

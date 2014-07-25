@@ -5,14 +5,6 @@
 var SNIPPETS_URL = 'https://$(SNIPPETS_URL)';
 var SAVE_FREQUENCY_MS = 3000;
 
-function CreatePersistentSnippets() {
-  return new PersistentString('snippets', 16, function(value) {
-    // Migration from when the snippets string and selection data were stored
-    // in the same storage key.
-    return typeof value == 'object' ? value.value : value;
-  });
-}
-
 // A Promise to the latest call to a storage operation, so that they can be
 // easily run in serial and not stomp on each other.
 var pendingStorageOp = Promise.resolve();
@@ -30,7 +22,7 @@ window.load = function load() {
   return new Promise(function(resolve, reject) {
     pendingStorageOp = pendingStorageOp.then(function() {
       return Promise.all([
-        CreatePersistentSnippets().get(),
+        PersistentString.ForSnippets().get(),
         chrome.storage.sync.get(['selectionStart', 'selectionEnd']),
       ]).then(function(all) {
         return {
@@ -63,7 +55,7 @@ window.save = function save(newSnippets, onError) {
     pendingStorageOp = pendingStorageOp.then(function() {
       try {
         return Promise.all([
-          CreatePersistentSnippets().set(pendingSnippets.value),
+          PersistentString.ForSnippets().set(pendingSnippets.value),
           chrome.storage.sync.set({
             selectionStart: pendingSnippets.selectionStart,
             selectionEnd: pendingSnippets.selectionEnd,
@@ -104,7 +96,14 @@ function waitUntilLoadComplete(tab) {
 }
 
 function paste(tabId) {
-  return chrome.tabs.executeScript(tabId, {file: 'paste.js'});
+  var executeScript = function(file) {
+    return chrome.tabs.executeScript(tabId, {file: file})
+  };
+  executeScript('promise.js').then(function() {
+    return executeScript('persistent_string.js');
+  }).then(function() {
+    return executeScript('paste.js');
+  });
 }
 
 window.submit = function submit() {
