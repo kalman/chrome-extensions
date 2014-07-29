@@ -90,9 +90,11 @@ chrome.runtime.getBackgroundPage().then(function(bg) {
       // TODO(kalman): Make this configurable in an options page.
       // TODO(kalman): Work with gitiles.
       var rewrites = [
-        [/codereview\.chromium\.org\/([0-9]+)/, 'http://crrev.com/$1'],
-        [/code\.google\.com\/.*[?&]id=([0-9]+)/, 'http://crbug.com/$1'],
-        [/src\.chromium\.org\/.*[?&]revision=([0-9]+)/, 'http://crrev.com/$1'],
+        [/codereview\.chromium\.org\/([0-9]+)/, 'crrev.com/$1'],
+        [/code\.google\.com\/.*[?&]id=([0-9]+)/, 'crbug.com/$1'],
+        [/src\.chromium\.org\/.*[?&]revision=([0-9]+)/, 'crrev.com/$1'],
+        // Only the first 8 characters of the git hash.
+        [/chromium.googlesource.com\/chromium\/src\/\+\/(.{8})/, 'crrev.com/$1'],
       ];
       for (var i = 0; i < rewrites.length; i++) {
         var exec = rewrites[i][0].exec(url)
