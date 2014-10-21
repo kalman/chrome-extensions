@@ -46,8 +46,7 @@ AuthorSearcher.prototype.getSearchURL = function() {
 
 AuthorSearcher.getGitChromiumOrgAuthorSearch_ = function(author) {
   return [
-    'https://git.chromium.org/gitweb/?',
-    'p=chromium.git&a=search&h=HEAD&st=author&s=',
+    'https://chromium.googlesource.com/chromium/src/+log/master?author=',
     encodeURI(author)
   ].join('');
 };

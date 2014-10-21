@@ -7,11 +7,7 @@ function CrrevSearcher(query) {
 inherits(CrrevSearcher, Searcher);
 
 CrrevSearcher.prototype.getSuggestionsURL = function() {
-  return [
-    'https://src.chromium.org/viewvc/chrome?revision=',
-    encodeURI(this.query),
-    '&view=revision'
-  ].join('');
+  return 'http://crrev.com/' + encodeURI(this.query);
 };
 
 CrrevSearcher.prototype.getSuggestions = function(response) {
