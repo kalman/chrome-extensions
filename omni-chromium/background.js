@@ -84,6 +84,7 @@ chrome.omnibox.onInputEntered.addListener(function(query, disposition) {
 
   var tabsFunction = chrome.tabs.create;
   var tabsOptions = {
+    active: true,
     url: query
   };
 
@@ -91,8 +92,13 @@ chrome.omnibox.onInputEntered.addListener(function(query, disposition) {
   switch (disposition) {
     case 'currentTab':
       tabsFunction = chrome.tabs.update;
+      break;
     case 'newBackgroundTab':
       tabsOptions.active = false;
+      break;
+    case 'newForegroundTab':
+      // Default configuration.
+      break;
   }
 
   tabsFunction(tabsOptions);
