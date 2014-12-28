@@ -8,7 +8,8 @@ inherits(CrbugSearcher, Searcher);
 
 CrbugSearcher.mainProject = "chromium";
 
-CrbugSearcher.projects = [CrbugSearcher.mainProject, "v8", "skia", "webrtc", "pdfium", "angleproject"];
+CrbugSearcher.projects = [
+  CrbugSearcher.mainProject, "v8", "skia", "webrtc", "pdfium", "angleproject"];
 
 CrbugSearcher.prototype.getSuggestionsURL = function() {
   return this.isBugQuery_() ? this.getBugURL_() : this.getIssueListURL_();
@@ -75,14 +76,14 @@ CrbugSearcher.prototype.getSearchURL = function() {
 };
 
 CrbugSearcher.prototype.isBugQuery_ = function() {
-  return !!CrbugSearcher.parseBugNumberQuery(this.query);
+  return !!CrbugSearcher.parseBugNumberQuery_(this.query);
 };
 
 CrbugSearcher.prototype.getBugURL_ = function() {
   return CrbugSearcher.getCodeGoogleComIssue_(this.query);
 };
 
-CrbugSearcher.parseBugNumberQuery = function (originalQuery) {
+CrbugSearcher.parseBugNumberQuery_ = function (originalQuery) {
   var query, parsedQuery, project = CrbugSearcher.mainProject;
   function isBugNumber(bugNumberQuery) {
    return !isNaN(Number.parseInt(bugNumberQuery));
@@ -105,8 +106,9 @@ CrbugSearcher.parseBugNumberQuery = function (originalQuery) {
 };
 
 CrbugSearcher.getCodeGoogleComIssue_ = function(query) {
-  var parsedQuery = CrbugSearcher.parseBugNumberQuery(query);
-  return 'https://code.google.com/p/' + parsedQuery.project + '/issues/detail?id=' + parsedQuery.issueNumber;
+  var parsedQuery = CrbugSearcher.parseBugNumberQuery_(query);
+  return 'https://code.google.com/p/' + parsedQuery.project +
+		'/issues/detail?id=' + parsedQuery.issueNumber;
 };
 
 CrbugSearcher.prototype.getIssueListURL_ = function() {
