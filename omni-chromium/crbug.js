@@ -6,6 +6,11 @@ function CrbugSearcher(query) {
 }
 inherits(CrbugSearcher, Searcher);
 
+CrbugSearcher.mainProject = "chromium";
+
+CrbugSearcher.projects = [
+  CrbugSearcher.mainProject, "v8", "skia", "webrtc", "pdfium", "angleproject"];
+
 CrbugSearcher.prototype.getSuggestionsURL = function() {
   return this.isBugQuery_() ? this.getBugURL_() : this.getIssueListURL_();
 };
@@ -33,7 +38,7 @@ CrbugSearcher.prototype.getSuggestions = function(response) {
     }];
   }
 
-  var suggestions = []
+  var suggestions = [];
   Array.prototype.forEach.call(
       dom.querySelectorAll('#resultstable tr:not(#headingrow)'),
       function(row) {
@@ -71,15 +76,39 @@ CrbugSearcher.prototype.getSearchURL = function() {
 };
 
 CrbugSearcher.prototype.isBugQuery_ = function() {
-  return !isNaN(Number.parseInt(this.query));
+  return !!CrbugSearcher.parseBugNumberQuery_(this.query);
 };
 
 CrbugSearcher.prototype.getBugURL_ = function() {
   return CrbugSearcher.getCodeGoogleComIssue_(this.query);
 };
 
-CrbugSearcher.getCodeGoogleComIssue_ = function(issueNumber) {
-  return 'https://code.google.com/p/chromium/issues/detail?id=' + issueNumber;
+CrbugSearcher.parseBugNumberQuery_ = function (originalQuery) {
+  var query, parsedQuery, project = CrbugSearcher.mainProject;
+  function isBugNumber(bugNumberQuery) {
+   return !isNaN(Number.parseInt(bugNumberQuery));
+  }
+
+  query = originalQuery;
+  if (isBugNumber(query)) {
+    return {project: project, issueNumber: query};
+  }
+
+  parsedQuery = originalQuery.split(":");
+  project = parsedQuery[0];
+  query = parsedQuery[1];
+  
+  if (CrbugSearcher.projects.indexOf(project) !== -1 && isBugNumber(query)) {
+    return {project: project, issueNumber: query};
+  }
+  
+  return;
+};
+
+CrbugSearcher.getCodeGoogleComIssue_ = function(query) {
+  var parsedQuery = CrbugSearcher.parseBugNumberQuery_(query);
+  return 'https://code.google.com/p/' + parsedQuery.project +
+		'/issues/detail?id=' + parsedQuery.issueNumber;
 };
 
 CrbugSearcher.prototype.getIssueListURL_ = function() {
@@ -89,7 +118,7 @@ CrbugSearcher.prototype.getIssueListURL_ = function() {
     encodedQuery.push(encodeURI(component));
   });
   return [
-    'https://code.google.com/p/chromium/issues/list?',
+    'https://code.google.com/p/' + CrbugSearcher.mainProject + '/issues/list?',
     'q=commentby:me+', encodedQuery.join('+'), '&',
     'sort=-id&',
     'colspec=ID%20Pri%20M%20Iteration%20ReleaseBlock%20Cr%20Status%20Owner%20',
