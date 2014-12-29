@@ -6,10 +6,10 @@ function CrbugSearcher(query) {
 }
 inherits(CrbugSearcher, Searcher);
 
-CrbugSearcher.mainProject = "chromium";
+CrbugSearcher.mainProject_ = "chromium";
 
-CrbugSearcher.projects = [
-  CrbugSearcher.mainProject, "v8", "skia", "webrtc", "pdfium", "angleproject"];
+CrbugSearcher.projects_ = [
+  CrbugSearcher.mainProject_, "v8", "skia", "webrtc", "pdfium", "angleproject"];
 
 CrbugSearcher.prototype.getSuggestionsURL = function() {
   return this.isBugQuery_() ? this.getBugURL_() : this.getIssueListURL_();
@@ -84,7 +84,7 @@ CrbugSearcher.prototype.getBugURL_ = function() {
 };
 
 CrbugSearcher.parseBugNumberQuery_ = function (originalQuery) {
-  var query, parsedQuery, project = CrbugSearcher.mainProject;
+  var query, parsedQuery, project = CrbugSearcher.mainProject_;
   function isBugNumber(bugNumberQuery) {
    return !isNaN(Number.parseInt(bugNumberQuery));
   }
@@ -118,7 +118,7 @@ CrbugSearcher.prototype.getIssueListURL_ = function() {
     encodedQuery.push(encodeURI(component));
   });
   return [
-    'https://code.google.com/p/' + CrbugSearcher.mainProject + '/issues/list?',
+    'https://code.google.com/p/' + CrbugSearcher.mainProject_ + '/issues/list?',
     'q=commentby:me+', encodedQuery.join('+'), '&',
     'sort=-id&',
     'colspec=ID%20Pri%20M%20Iteration%20ReleaseBlock%20Cr%20Status%20Owner%20',
