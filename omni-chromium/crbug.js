@@ -98,7 +98,7 @@ CrbugSearcher.parseBugNumberQuery_ = function (originalQuery) {
   project = parsedQuery[0];
   query = parsedQuery[1];
 
-  if (CrbugSearcher.projects.indexOf(project) !== -1 && isBugNumber(query)) {
+  if (CrbugSearcher.projects_.indexOf(project) !== -1 && isBugNumber(query)) {
     return {project: project, issueNumber: query};
   }
 
