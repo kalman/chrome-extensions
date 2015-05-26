@@ -1,19 +1,18 @@
 {
   "content_scripts": [{
-    "js": ["script.js"],
+    "css": ["style.css"],
     "matches": [
-      "*://github.com/*",
       "*://chromiumcodereview.appspot.com/*",
       "*://codereview.chromium.org/*"
     ]
   }],
-  "description": "Protects you from accidentally closing in-progress code review comments",
+  "description": "Makes Chromium codereview comments monospace",
   "icons": {
     "16": "assets/icon16.png",
     "48": "assets/icon48.png",
     "128": "assets/icon128.png"
   },
   "manifest_version": 2,
-  "name": "Comment Protector",
-  "version": "1.2"
+  "name": "Comment Monospacer",
+  "version": "1.0"
 }
