@@ -1,20 +1,28 @@
 .b-a {
-  /* Reduce gap between search bar and file content. */
-  margin-top: 6px !important;
+  /* Reduce spacing between search box and file content to match gap between
+   * search box and left of page. */
+  margin-top: 7px !important;
 }
 
 .m-d {
-  /* Make the Chromium logo a sensible size, and reposition. */
-  height: 22px !important;
-  margin-bottom: -2px !important;
-  margin: -1px 0 0 0 !important;
-  padding: 0 !important;
-  position: relative;
-  top: 2px;
-  width: 22px !important;
+  /* Hide the Chromium logo. */
+  display: none;
 }
 
 .m-e {
-  /* Reduce gap between top of page and search bar. */
-  margin-top: 0px !important;
+  /* Reduce gap between search box and top of page to match gap between search
+   * box and left of page. */
+  margin-top: 0 !important;
+}
+
+.m-e td:first-child {
+  /* Codesearch puts a hacky <td> element in to add some spacing on the left of
+   * the search box. Hide it. */
+  display: none;
+}
+
+.m-g {
+  /* Align the search box with the button. */
+  position: relative;
+  top: 1px;
 }
