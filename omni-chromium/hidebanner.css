@@ -4,11 +4,6 @@
   margin-top: 7px !important;
 }
 
-.m-d {
-  /* Hide the Chromium logo. */
-  display: none;
-}
-
 .m-e {
   /* Reduce gap between search box and top of page to match gap between search
    * box and left of page. */
