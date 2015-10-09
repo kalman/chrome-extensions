@@ -8,6 +8,7 @@
   /* Reduce gap between search box and top of page to match gap between search
    * box and left of page. */
   margin-top: 0 !important;
+  height: 30px !important;
 }
 
 .m-e td:first-child {
