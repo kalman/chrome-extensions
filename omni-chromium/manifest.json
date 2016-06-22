@@ -29,7 +29,7 @@
   },
   "permissions": [
     "storage",
-    "https://code.google.com/p/cs/codesearch/codesearch/json/*"
+    "https://cs.chromium.org/codesearch/json/*"
   ],
   "version": "11"
 }
