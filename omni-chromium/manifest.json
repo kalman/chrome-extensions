@@ -10,12 +10,6 @@
     ],
     "persistent": false
   },
-  "content_scripts": [
-    {
-      "matches": ["*://code.google.com/p/chromium/codesearch*"],
-      "css": ["hidebanner.css"]
-    }
-  ],
   "description": "Chromium search tools in the Omnibox",
   "icons": {
     "16": "assets/chromium16.png",
@@ -29,7 +23,8 @@
   },
   "permissions": [
     "storage",
-    "https://code.google.com/p/cs/codesearch/codesearch/json/*"
+    "https://bugs.chromium.org/p/chromium/feeds/*",
+    "https://cs.chromium.org/codesearch/json/*"
   ],
-  "version": "11"
+  "version": "12"
 }
