@@ -7,7 +7,7 @@ function AuthorSearcher(query) {
 inherits(AuthorSearcher, Searcher);
 
 AuthorSearcher.prototype.getSuggestionsURL = function() {
-  return 'https://code.google.com/p/chromium/feeds/issueOptions';
+  return 'https://bugs.chromium.org/p/chromium/feeds/issueOptions';
 };
 
 AuthorSearcher.prototype.getSuggestions = function(response) {
