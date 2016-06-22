@@ -8,7 +8,7 @@ inherits(CodesearchSearcher, Searcher);
 
 CodesearchSearcher.prototype.getSuggestionsURL = function() {
   return [
-    'https://code.google.com/p/cs/codesearch/codesearch/json?',
+    'https://cs.chromium.org/codesearch/json?',
     'suggest_request=b&',
     'query=', encodeURI(this.query), '+package%3Achromium&',
     'query_cursor_position=' + this.query.length, '&',
