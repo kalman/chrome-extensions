@@ -42,11 +42,9 @@ CodesearchSearcher.prototype.getSuggestions = function(response) {
 
     // Construct the link that has been suggested.
     var href = [
-      'https://code.google.com/p/chromium/codesearch#',
-      suggest.goto_package_id, '/', suggest.goto_path, '&',
-      'q=', encodeURI(this.query), '&',
-      'sq=package:chromium&',
-      has_line ? ('l=' + suggest.goto_line) : '',
+      'https://cs.chromium.org/', suggest.goto_package_id, '/',
+      suggest.goto_path, '?', 'q=', encodeURI(this.query), '&',
+      'sq=package:chromium&', has_line ? ('l=' + suggest.goto_line) : '',
     ].join('');
 
     // Simpler to always have a match_start/match_end.
@@ -78,8 +76,7 @@ CodesearchSearcher.prototype.getSuggestions = function(response) {
 
 CodesearchSearcher.prototype.getSearchURL = function() {
   return [
-    'https://code.google.com/p/chromium/codesearch#search/',
-    '&q=', encodeURI(this.query),
+    'https://cs.chromium.org/search/', '?q=', encodeURI(this.query),
     '&sq=package:chromium&type=cs'
   ].join('');
 };
