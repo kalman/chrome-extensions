@@ -10,12 +10,6 @@
     ],
     "persistent": false
   },
-  "content_scripts": [
-    {
-      "matches": ["*://code.google.com/p/chromium/codesearch*"],
-      "css": ["hidebanner.css"]
-    }
-  ],
   "description": "Chromium search tools in the Omnibox",
   "icons": {
     "16": "assets/chromium16.png",
