@@ -107,7 +107,7 @@ CrbugSearcher.parseBugNumberQuery_ = function (originalQuery) {
 
 CrbugSearcher.getCodeGoogleComIssue_ = function(query) {
   var parsedQuery = CrbugSearcher.parseBugNumberQuery_(query);
-  return 'https://code.google.com/p/' + parsedQuery.project +
+  return 'https://bugs.chromium.org/p/' + parsedQuery.project +
 		'/issues/detail?id=' + parsedQuery.issueNumber;
 };
 
@@ -118,7 +118,7 @@ CrbugSearcher.prototype.getIssueListURL_ = function() {
     encodedQuery.push(encodeURI(component));
   });
   return [
-    'https://code.google.com/p/' + CrbugSearcher.mainProject_ + '/issues/list?',
+    'https://bugs.chromium.org/p/' + CrbugSearcher.mainProject_ + '/issues/list?',
     'q=commentby:me+', encodedQuery.join('+'), '&',
     'sort=-id&',
     'colspec=ID%20Pri%20M%20Iteration%20ReleaseBlock%20Cr%20Status%20Owner%20',
