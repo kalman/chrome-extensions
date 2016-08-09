@@ -44,11 +44,17 @@ function addNextGitHubComment() {
   }
 
   document.body.addEventListener('keydown', e => {
+    if (document.activeElement !== document.body) {
+      return; // don't go to next comment if user is typing
+    }
+
     if (e.key === 'n' || e.key === 'j') {
       setOffset(1);
     } else if (e.key === 'p' || e.key === 'k') {
       setOffset(-1);
     }
+    e.preventDefault();
+    e.stopPropagation();
   });
 
   let hlComment;
