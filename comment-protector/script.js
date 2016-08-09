@@ -44,8 +44,14 @@ function addNextGitHubComment() {
   }
 
   document.body.addEventListener('keydown', e => {
+    // Don't go to next comment if user is typing.
     if (document.activeElement !== document.body) {
-      return; // don't go to next comment if user is typing
+      return;
+    }
+
+    // Ignore if there are any modifiers.
+    if (e.ctrlKey || e.metaKey || e.shiftKey) {
+      return;
     }
 
     if (e.key === 'n' || e.key === 'j') {
