@@ -1,22 +1,33 @@
-// const copyright = null;
+// Copyright ../LICENSE
 
-function fix(comment) {
-  for (const dragDrop of comment.querySelectorAll('input.manual-file-chooser')) {
-    dragDrop.setAttribute('tabindex', '-1');
-  }
-  for (const mdLink of comment.querySelectorAll('a.tabnav-extra')) {
-    mdLink.setAttribute('tabindex', '-1');
+const formSelector = [
+  '.js-previewable-comment-form',
+  '.js-suggester-container',
+  '.new-discussion-timeline',
+  '.previewable-comment-form',
+].join(', ');
+
+const disableSelector = [
+  'a.tabnav-extra',
+  'button.preview-tab',
+  'button.write-tab',
+  'input.manual-file-chooser',
+].join(', ');
+
+function fix(candidate) {
+  for (const form of document.querySelectorAll(formSelector)) {
+    for (const disable of form.querySelectorAll(disableSelector)) {
+      disable.setAttribute('tabindex', '-1');
+    }
   }
 }
 
 const observer = new MutationObserver(mutations => {
-  mutations.forEach((mutation, i) => {
+  for (const mutation of mutations) {
     for (const added of mutation.addedNodes) {
-      if (added.classList.contains('inline-comments')) {
-        fix(added);
-      }
+      fix(added);
     }
-  });
+  }
 });
 
 observer.observe(document.body, {
@@ -24,6 +35,9 @@ observer.observe(document.body, {
   subtree: true,
 });
 
-for (const comment of document.body.querySelectorAll('.inline-comments')) {
-  fix(comment);
-}
+document.body.onunload = () => {
+  observer.unobserve();
+  observer = null;
+};
+
+fix(document.body);

@@ -5,7 +5,7 @@
       "*://github.com/*"
     ]
   }],
-  "description": "Makes the \"Add Comment\" button the first in GitHub pull request tab order",
+  "description": "GitHub: makes the \"Comment\" buttons the first in tab order",
   "icons": {
     "16": "assets/icon16.png",
     "48": "assets/icon48.png",
@@ -13,5 +13,5 @@
   },
   "manifest_version": 2,
   "name": "GitHub PR Tab Fixer",
-  "version": "1.0"
+  "version": "2.0"
 }
