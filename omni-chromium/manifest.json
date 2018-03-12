@@ -17,7 +17,7 @@
     "128": "assets/chromium128.png"
   },
   "manifest_version": 2,
-  "name": "OmniChromium",
+  "name": "Omnibox for Chromium Developers",
   "omnibox": {
     "keyword": "cr"
   },
@@ -26,5 +26,5 @@
     "https://bugs.chromium.org/p/chromium/feeds/*",
     "https://cs.chromium.org/codesearch/json/*"
   ],
-  "version": "12"
+  "version": "15"
 }
